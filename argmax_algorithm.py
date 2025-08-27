@@ -117,43 +117,32 @@ def handle_user_edge_addition(graph, current_scores, sigma=2.0):
 
 # ---
 
-if __name__ == "__main__":
-    # Parameters for the argmax-based scoring algorithm
-    SIGMA = 2.0
-
-    while True:
-        try:
-            n_input = input("Enter the number of vertices (e.g., 10): ")
-            N_VERTICES = int(n_input)
-            if N_VERTICES >= 0:
-                break
-            else:
-                print("Error: Number of vertices cannot be negative.")
-        except ValueError:
-            print("Invalid input. Please enter a whole number.")
-            
+def generate_graph_and_display(N_VERTICES, M_EDGES, sigma=2.0):
+    """
+    Generates a random graph with specified vertices and edges, computes initial and updated scores,
+    and displays the results. Returns the graph and updated scores.
+    
+    Args:
+        N_VERTICES (int): Number of vertices in the graph
+        M_EDGES (int): Number of edges in the graph
+        sigma (float): Parameter for the argmax scoring algorithm (default: 2.0)
+    
+    Returns:
+        tuple: (graph, updated_scores)
+    """
+    # TODO: add a check for non positive N_VERTICES
+    
     # WARNING for exponential complexity
     if N_VERTICES > 10: 
         print(f"\n🚨 WARNING: You chose {N_VERTICES} vertices.")
         print("The argmax scoring algorithm has exponential complexity (O(2^n)) and will be")
         print("extremely slow for N > 10, potentially taking hours or crashing for N > 20.")
-        confirm = input("Are you sure you want to continue? (y/n): ")
-        if confirm.lower() != 'y':
-            print("Exiting.")
-            sys.exit()
+        print("Proceeding anyway...")
 
     max_possible_edges = N_VERTICES * (N_VERTICES - 1) // 2
     
-    while True:
-        try:
-            m_input = input(f"Enter the number of edges (0 to {max_possible_edges}): ")
-            M_EDGES = int(m_input)
-            if 0 <= M_EDGES <= max_possible_edges:
-                break
-            else:
-                print(f"Error: Number of edges must be between 0 and {max_possible_edges}.")
-        except ValueError:
-            print("Invalid input. Please enter a whole number.")
+    if not (0 <= M_EDGES <= max_possible_edges):
+        raise ValueError(f"Number of edges must be between 0 and {max_possible_edges}.")
 
     G = generate_random_graph(N_VERTICES, M_EDGES)
     print(f"\n✅ Generated a random graph with {N_VERTICES} vertices and {M_EDGES} edges.")
@@ -172,11 +161,9 @@ if __name__ == "__main__":
     plot_graph_with_scores(G, initial_scores, initial_title)
 
     print("\nComputing the first score update using Argmax-based algorithm...")
-    updated_scores = compute_next_scores(G, initial_scores, sigma=SIGMA)
+    updated_scores = compute_next_scores(G, initial_scores, sigma=sigma)
     updated_title = "Normalized State (First Iteration with Argmax-based Scoring)"
     display_graph_state(G, updated_scores, updated_title)
     plot_graph_with_scores(G, updated_scores, updated_title)
     
-    handle_user_edge_addition(G, updated_scores, sigma=SIGMA)
-    
-    print("\nProcess finished. 👋")
+    return G, updated_scores
