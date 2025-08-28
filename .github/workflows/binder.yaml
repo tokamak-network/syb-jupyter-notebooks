@@ -10,4 +10,5 @@ jobs:
         with:
           DOCKER_USERNAME: ${{ github.actor }}
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          MYBINDERORG_CACHE: true
+          DOCKER_REGISTRY: ghcr.io
+          BINDER_CACHE: true
