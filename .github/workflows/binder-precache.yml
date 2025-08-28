@@ -1,0 +1,17 @@
+# .github/workflows/binder-precache.yml
+name: Binder precache (no registry)
+on:
+  push:
+    branches: [ "main", "feat/improve-building-process" ]
+  workflow_dispatch:
+
+jobs:
+  precache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jupyterhub/repo2docker-action@master
+        with:
+          NO_PUSH: true
+          # Build + cache the exact ref that was pushed
+          MYBINDERORG_TAG: ${{ github.ref_name }}
