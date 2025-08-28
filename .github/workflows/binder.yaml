@@ -1,0 +1,13 @@
+# .github/workflows/binder.yaml
+name: Prebuild Binder image
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: machine-learning-apps/repo2docker-action@master
+        with:
+          DOCKER_USERNAME: ${{ github.actor }}
+          DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          MYBINDERORG_CACHE: true
