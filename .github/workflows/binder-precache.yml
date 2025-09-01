@@ -14,4 +14,4 @@ jobs:
         with:
           NO_PUSH: true
           # Build + cache the exact ref that was pushed
-          MYBINDERORG_TAG: ${{ github.event.ref }}
+          MYBINDERORG_TAG: ${{ github.ref_name }}
