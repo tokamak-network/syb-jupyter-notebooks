@@ -8,7 +8,7 @@ import itertools
 import sys
 
 # Import the PageRank-based scoring algorithm
-from pagerank_scoring_algorithm import compute_next_scores, normalize_scores, compute_pagerank
+from syb_network.scoring.pagerank import compute_next_scores, normalize_scores, compute_pagerank
 
 def generate_random_graph(n, m):
     """

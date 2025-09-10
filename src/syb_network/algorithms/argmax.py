@@ -8,7 +8,7 @@ import sys
 
 # Import the argmax-based scoring algorithm
 # Ensure 'scipy' is installed: pip install scipy
-from argmax_scoring_algorithm import compute_next_scores, normalize_scores
+from syb_network.scoring.argmax import compute_next_scores, normalize_scores
 
 def generate_random_graph(n, m):
     """
