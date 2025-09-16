@@ -5,7 +5,7 @@ We implement Python code for demo and testing purposes of Sybil-resistant scorin
 ## Notebooks & Scoring algorithms:
 
 We implement 5 notebooks:
-- The main one where we discuss and compare four algorithms: [TBA](TBA).
+- The main one where we discuss and compare four algorithms: [Comparison Notebook](https://mybinder.org/v2/gh/tokamak-network/syb-jupyter-notebooks/2eb36a97dc987dd5ba25d9782b405fa43ddfe354?urlpath=lab%2Ftree%2Finitial_notebook.ipynb).
 - Four scoring algorithms:
     - [Random walk scoring algorithm](https://mybinder.org/v2/gh/tokamak-network/syb-jupyter-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2Frandom_walk_scoring_algorithm.ipynb)
     - [Equal split scoring algorithm](https://mybinder.org/v2/gh/tokamak-network/syb-jupyter-notebooks/HEAD?urlpath=%2Fdoc%2Ftree%2Fequal_split_algorithm.ipynb)
