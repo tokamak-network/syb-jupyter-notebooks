@@ -345,18 +345,24 @@ def compare(n_vertices,
 def handle_user_edge_addition(graph, 
                               scores_dict, 
                               n_vertices, 
-                              m_edges, 
-                              params= {
-        'sigma_equal_split': 2.0,
-        'sigma_argmax': 2.0,
-        'sigma_pagerank': 2.0,
-        'alpha_pagerank': 0.15,
-        'max_pr_iterations': 100
-    }):
+                              m_edges,
+                              sigma_equal_split=2.0,
+                              sigma_argmax=2.0, 
+                              sigma_pagerank=2.0,
+                              alpha_pagerank=0.15,  
+                              max_pr_iterations=100):
     """
     Handles the main interactive loop.
     Prompts the user to add an edge, then re-runs the comparison.
     """
+
+    params = {
+        'sigma_equal_split': sigma_equal_split,
+        'sigma_argmax': sigma_argmax,
+        'sigma_pagerank': sigma_pagerank,
+        'alpha_pagerank': alpha_pagerank,
+        'max_pr_iterations': max_pr_iterations}
+    
     current_graph = graph
     current_scores_dict = scores_dict
 
@@ -438,8 +444,8 @@ def main():
             current_scores_dict,
             N_VERTICES, 
             M_EDGES,
-            params
-        )
+            **params
+            )
 
         print("\nExiting application. Goodbye! 👋")
 
