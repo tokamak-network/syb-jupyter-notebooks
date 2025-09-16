@@ -13,44 +13,88 @@ def normalize_scores(scores):
         return scores / score_sum
     return np.zeros_like(scores)
 
-def compute_pagerank(graph, alpha, source_node, max_iterations=100, tolerance=1e-6):
+# def compute_pagerank_power_iterations(graph, alpha, source_node, max_iterations=100, tolerance=1e-6):
+#     """
+#     Computes a personalized PageRank vector for a given source node using
+#     the correct power iteration method.
+#     """
+#     n = graph.number_of_nodes()
+#     if n == 0:
+#         return np.array([])
+#     nodes = list(graph.nodes())
+#     node_to_idx = {node: i for i, node in enumerate(nodes)}
+
+#     # Initialize pagerank vector, with all mass on the source node.
+#     s = np.zeros(n)
+#     if source_node in node_to_idx:
+#         s[node_to_idx[source_node]] = 1.0
+
+#     p_current = s.copy()
+    
+#     # Pre-calculate degrees for efficiency
+#     degrees = dict(graph.degree())
+    
+#     for iteration in range(max_iterations):
+#         p_next = np.zeros(n)
+        
+#         # Calculate the random walk part
+#         for i in range(n):
+#             node_i = nodes[i]
+#             if degrees.get(node_i, 0) > 0:
+#                 p_current_val = p_current[i]
+#                 for neighbor in graph.neighbors(node_i):
+#                     p_next[node_to_idx[neighbor]] += p_current_val / degrees[node_i]
+
+#         # Apply the power iteration formula
+#         p_next = alpha * s + (1 - alpha) * p_next
+        
+#         # Check for convergence
+#         if np.linalg.norm(p_next - p_current, 1) < tolerance:
+#             return p_next
+            
+#         p_current = p_next.copy()
+        
+#     return p_current
+
+def compute_pagerank_series(graph, alpha, source_node, max_iterations=100):
     """
-    Computes a personalized PageRank vector for a given source node.
+    Computes a personalized PageRank vector using the correct
+    infinite series expansion formula.
     """
     n = graph.number_of_nodes()
+    if n == 0:
+        return np.array([])
     nodes = list(graph.nodes())
     node_to_idx = {node: i for i, node in enumerate(nodes)}
 
-    # Initialize pagerank vector, with all mass on the source node.
+    # Create the personalization vector 's'
     s = np.zeros(n)
     if source_node in node_to_idx:
         s[node_to_idx[source_node]] = 1.0
 
-    p_current = s.copy()
-    
-    # Pre-calculate degrees for efficiency
-    degrees = dict(graph.degree())
-    
-    for iteration in range(max_iterations):
-        p_next = np.zeros(n)
-        
-        # Calculate the random walk part
-        for i in range(n):
-            node_i = nodes[i]
-            for neighbor in graph.neighbors(node_i):
-                if degrees[node_i] > 0:
-                    p_next[node_to_idx[neighbor]] += p_current[i] / degrees[node_i]
+    # Get the adjacency matrix A
+    A = nx.to_numpy_array(graph)
 
-        # Apply the power iteration formula
-        p_next = alpha * s + (1 - alpha) * 0.5 * (p_current + p_next)
-        
-        # Check for convergence
-        if np.linalg.norm(p_next - p_current, 1) < tolerance:
-            return normalize_scores(p_next)
-            
-        p_current = p_next.copy()
-        
-    return normalize_scores(p_current)
+    # Get degrees
+    degrees = np.array([graph.degree(node) for node in nodes])
+
+    # Create the correct transition matrix W
+    W = np.zeros((n, n))
+    for i in range(n):
+        if degrees[i] > 0:
+            W[i, :] = A[i, :] / degrees[i]
+
+    # Compute the infinite series sum
+    pr_vector_sum = np.zeros(n)
+    s_W_t = s.copy() # Represents the term s * W^t
+
+    for t in range(max_iterations):
+        pr_vector_sum += ((1 - alpha) ** t) * s_W_t
+        s_W_t = s_W_t @ W # Matrix multiplication for the next term
+
+    pr_vector = alpha * pr_vector_sum
+
+    return pr_vector
 
 def compute_next_scores(graph, current_scores=None, alpha=0.15, sigma=1.0, max_pr_iterations=100):
     """
@@ -71,7 +115,10 @@ def compute_next_scores(graph, current_scores=None, alpha=0.15, sigma=1.0, max_p
     # Compute a score for each vertex
     for i, v in enumerate(nodes):
         # 1. Compute personalized pagerank vector for vertex v
-        pr_vector = compute_pagerank(graph, alpha, v, max_pr_iterations)
+        # Use the series expansion algorithm
+        pr_vector = compute_pagerank_series(graph, alpha, v, max_pr_iterations)
+        # #   Or use the power iteration method:
+        # pr_vector = compute_pagerank_power_iterations(graph, alpha, v, max_pr_iterations)
         
         # 2. Get the permutation based on descending pagerank scores
         sorted_indices = np.argsort(pr_vector)[::-1]
@@ -124,7 +171,10 @@ def compute_next_scores_unnorm(graph, current_scores=None, alpha=0.15, sigma=1.0
     # Compute a score for each vertex
     for i, v in enumerate(nodes):
         # 1. Compute personalized pagerank vector for vertex v
-        pr_vector = compute_pagerank(graph, alpha, v, max_pr_iterations)
+        # Use the corrected series expansion algorithm
+        pr_vector = compute_pagerank_series(graph, alpha, v, max_pr_iterations)
+        # #   Or use the power iteration method:
+        # pr_vector = compute_pagerank_power_iterations(graph, alpha, v, max_pr_iterations)
         
         # 2. Get the permutation based on descending pagerank scores
         sorted_indices = np.argsort(pr_vector)[::-1]
