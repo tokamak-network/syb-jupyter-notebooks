@@ -12,7 +12,7 @@ from utils import (
     format_transaction_display
 )
 
-def create_random_network(num_users=8, random_name='erdos_renyi', balance_range=(0.0, 0.1)) -> tuple:
+def create_random_network(num_users=8, random_name='erdos_renyi', balance_range=(0.0, 10.0)) -> tuple:
     """Create a random network, initialize contract, and set up user interfaces."""
     print(f"📊 Creating '{random_name}' network with {num_users} users...")
     network = Network.init_random(n_nodes=num_users, random_name=random_name, balance_range=balance_range)
@@ -24,8 +24,8 @@ def create_random_network(num_users=8, random_name='erdos_renyi', balance_range=
 
     print("\n💰 Funding user accounts from network balances...")
     for i, addr in enumerate(initial_addresses):
-        balance_eth = network.balance_list[i]
-        deposit_amount = int(balance_eth * 10**18)
+        balance_wton = network.balance_list[i]
+        deposit_amount = int(balance_wton * 10**18)
         contract.deposit(addr, deposit_amount)
 
     print("\n🤝 Creating vouching network from existing graph...")
@@ -83,8 +83,8 @@ class SYBUserInterface:
 
     def _create_widgets(self):
         """Create UI widgets."""
-        self.deposit_amount = widgets.FloatText(value=1.0, description='Amount (ETH):')
-        self.withdraw_amount = widgets.FloatText(value=0.5, description='Amount (ETH):')
+        self.deposit_amount = widgets.FloatText(value=1.0, description='Amount (WTON):')
+        self.withdraw_amount = widgets.FloatText(value=0.5, description='Amount (WTON):')
         self.vouch_target = widgets.Dropdown(options=self._get_other_users(), description='Target User:')
         self.unvouch_target = widgets.Dropdown(options=[], description='Target User:')
 
@@ -222,7 +222,7 @@ class SYBUserInterface:
             clear_output(wait=True)
             try:
                 self.user_interface.deposit(int(self.deposit_amount.value * 10**18))
-                print(f"✅ Deposited {self.deposit_amount.value:.2f} ETH.")
+                print(f"✅ Deposited {self.deposit_amount.value:.2f} WTON.")
                 # Don't refresh balance here - user can click balance button
             except Exception as e: print(f"❌ Deposit failed: {e}")
 
@@ -231,7 +231,7 @@ class SYBUserInterface:
             clear_output(wait=True)
             try:
                 self.user_interface.withdraw(int(self.withdraw_amount.value * 10**18))
-                print(f"✅ Withdrew {self.withdraw_amount.value:.2f} ETH.")
+                print(f"✅ Withdrew {self.withdraw_amount.value:.2f} WTON.")
                 # Don't refresh balance here - user can click balance button
             except Exception as e: print(f"❌ Withdraw failed: {e}")
 
@@ -260,7 +260,7 @@ class SYBUserInterface:
             balance = self.user_interface.get_my_balance() / 10**18
             score = self.user_interface.get_my_score()
             with self.output_area:
-                print(f"💰 Current Balance: {balance:.4f} ETH")
+                print(f"💰 Current Balance: {balance:.4f} WTON")
                 print(f"🏆 Current Score: {score:.4f}")
                 print(f"📍 Address: {self.first_user_addr}")
         except Exception as e:
@@ -341,7 +341,7 @@ class SYBUserInterface:
             status_html = f"""
             <div style='padding: 10px; font-size: 13px;'>
                 <div style='padding: 3px;'><strong>👥 Total Users:</strong> {num_users}</div>
-                <div style='padding: 3px;'><strong>💰 Total Deposits:</strong> {total_deposits:.4f} ETH</div>
+                <div style='padding: 3px;'><strong>💰 Total Deposits:</strong> {total_deposits:.4f} WTON</div>
                 <div style='padding: 3px;'><strong>⏳ Pending Txns:</strong> {pending_txns} / {batch_size}</div>
                 <div style='padding: 3px;'><strong>📊 Algorithm:</strong> {self.contract.scoring_algorithm}</div>
             </div>
@@ -428,7 +428,7 @@ class SYBUserInterface:
             print("🌐 Network Status Summary")
             print("=" * 40)
             print(f"👥 Total Users: {num_users}")
-            print(f"💰 Total Deposits: {total_deposits:.4f} ETH")
+            print(f"💰 Total Deposits: {total_deposits:.4f} WTON")
             print(f"📊 Scoring Algorithm: {scoring_algorithm}")
             print(f"⏳ Pending Transactions: {pending_txns}")
             print(f"📈 Average Score: {avg_score:.4f}")

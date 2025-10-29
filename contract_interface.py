@@ -9,6 +9,9 @@ TXN_WITHDRAW = 3
 TXN_VOUCH = 4
 TXN_UNVOUCH = 5
 
+# Minimum required balance to be active in the network for others in WTON (Tokamak Wrapped TON Tokens)
+MIN_BALANCE = 1 * 10**18  # 1 WTON
+
 
 @dataclass
 class Transaction:
@@ -24,6 +27,7 @@ class AccountInfo:
     """Account information stored in contract."""
     balance: int
     idx: int
+    has_vouched: bool = False  # Track if node has ever vouched
 
 
 @dataclass
@@ -72,7 +76,8 @@ class SYBContract:
             self.address_to_idx[address] = idx
             self.idx_to_address[idx] = address
             self.network.add_node(idx, balance=0.0)
-            self.account_info[address] = AccountInfo(balance=0, idx=idx)
+            # Initialize AccountInfo with has_vouched=False
+            self.account_info[address] = AccountInfo(balance=0, idx=idx, has_vouched=False)
             self.last_idx += 1
             return idx
         return self.address_to_idx[address]
@@ -100,18 +105,44 @@ class SYBContract:
         """Withdraw funds from the contract."""
         if amount <= 0:
             raise ValueError("Withdrawal amount must be positive.")
-        if withdrawer not in self.account_info or self.account_info[withdrawer].balance < amount:
+
+        account = self.account_info.get(withdrawer)
+
+        if not account or account.balance < amount:
             raise ValueError("Insufficient balance for withdrawal.")
+
+        # Check for minimum balance if node has vouched
+        if account.has_vouched and (account.balance - amount) < MIN_BALANCE:
+            raise ValueError(
+                f"Active nodes (who have vouched) must maintain a minimum balance of {MIN_BALANCE / 10**18} WTON."
+            )
+        
         self._add_tx(TXN_WITHDRAW, withdrawer, None, amount)
 
     def vouch(self, voucher: str, vouchee: str):
         """Create a trust relationship between two users."""
         if voucher == vouchee:
             raise ValueError("Cannot vouch for yourself.")
+
+        # Check if voucher has minimum balance
+        account = self.account_info.get(voucher)
+        if not account or account.balance < MIN_BALANCE:
+            raise ValueError(
+                f"Voucher {voucher} must have at least {MIN_BALANCE / 10**18} WTON to vouch."
+            )
+
         self._add_tx(TXN_VOUCH, voucher, vouchee, 0)
 
     def unvouch(self, unvoucher: str, unvouchee: str):
         """Remove a trust relationship between two users."""
+        
+        # Check if unvoucher has minimum balance
+        account = self.account_info.get(unvoucher)
+        if not account or account.balance < MIN_BALANCE:
+            raise ValueError(
+                f"Unvoucher {unvoucher} must have at least {MIN_BALANCE / 10**18} WTON to unvouch."
+            )
+
         self._add_tx(TXN_UNVOUCH, unvoucher, unvouchee, 0)
 
     def _process_transaction(self, txn: Transaction):
@@ -129,7 +160,7 @@ class SYBContract:
             self.network.set_balance(txn.from_idx, balance_in_eth)
 
         elif txn.identifier == TXN_WITHDRAW:
-            # Update account balance and network node balance
+            # Check is pre-flighted in withdraw(), so we just process
             self.account_info[from_addr].balance -= txn.amount
             balance_in_eth = self.account_info[from_addr].balance / 10**18
             self.network.set_balance(txn.from_idx, balance_in_eth)
@@ -140,6 +171,9 @@ class SYBContract:
             self.vouches[from_addr][to_addr] = True
             self.vouches[to_addr][from_addr] = True
             self.network.add_edge(txn.from_idx, txn.to_idx)
+            
+            # Mark the voucher as active
+            self.account_info[from_addr].has_vouched = True
 
         elif txn.identifier == TXN_UNVOUCH and to_addr:
             # Remove trust relationship
@@ -149,6 +183,15 @@ class SYBContract:
                 self.vouches[to_addr][from_addr] = False
             if self.network.graph.has_edge(txn.from_idx, txn.to_idx):
                 self.network.remove_edge(txn.from_idx, txn.to_idx)
+
+            # Check if the unvoucher is still vouching for anyone
+            is_still_vouching = False
+            if from_addr in self.vouches:
+                # Check if any value in the voucher's dict is True
+                is_still_vouching = any(self.vouches[from_addr].values())
+            
+            if not is_still_vouching:
+                self.account_info[from_addr].has_vouched = False
 
     def _ensure_vouch_relationship_exists(self, addr1: str, addr2: str):
         """Ensure vouch dictionaries exist for both addresses."""
